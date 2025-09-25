@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Retro Snake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="title">Retro Snake</header>
+
+      <section class="scoreboard" aria-live="polite">
+        <div>Score: <span id="scoreValue">0</span></div>
+        <div>Best: <span id="bestValue">0</span></div>
+        <button id="pauseButton" class="button" type="button">Pause</button>
+      </section>
+
+      <div class="game-container">
+        <canvas id="board" width="400" height="400" role="img" aria-label="Snake game board"></canvas>
+        <div id="overlay" class="overlay">
+          <h2 id="overlayTitle">Press Enter to Start</h2>
+          <p id="overlaySubtitle">Move with Arrow Keys or WASD</p>
+          <p id="overlayInfo">Press P to Pause · Enter to Restart</p>
+        </div>
+      </div>
+
+      <footer class="hint">High scores are stored locally in your browser.</footer>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
