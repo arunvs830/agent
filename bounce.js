@@ -17,34 +17,40 @@ const STORAGE_KEY = "retro-arcade-bounce-best";
 
 const TILE_SIZE = 40;
 const BALL_RADIUS = 16;
-const GRAVITY = 900;
+// Physics constants to match specifications
+const GRAVITY = 900 * 2.5; // Gravity scale 2.5 for weighty feel
 const JUMP_VELOCITY = 360;
 const MOVE_ACCEL = 900;
-const MOVE_DECAY = 0.84;
+const MOVE_DECAY = 0.5; // Linear drag 0.5 for smooth deceleration
 const MAX_VX = 220;
 const MAX_VY = 720;
 const CAMERA_LERP = 0.18;
 const PLATFORM_SPEED = 70;
 const PLATFORM_RANGE = TILE_SIZE * 2.5;
+// Physics material properties
+const BALL_FRICTION = 0.2;
+const BALL_RESTITUTION = 0.2;
+const BOUNCY_RESTITUTION = 1.5;
 
-// Level 1 map (20x12 tiles, 40px each)
+// Level 1 map (20x12 tiles, 40px each) - Exact specifications layout
 const LEVEL_MAP = [
   "....................",
-  ".......o............",
   "....................",
-  "...#####............",
   "....................",
-  "..@....^....o...>...",
-  "#####...~~~~...#####",
-  ".....###..........#.",
-  ".............=.....*",
-  "####################",
-  "....................",
+  "........#...........",  // High Platform for Ring #5
+  "........o...........",  // Ring #5 on High Platform  
+  "@o.o.#.oB.......>...",  // Start(@), Ring#1(o), Ring#2(o), Small Step(#), Ring#3(o), Bouncy Floor(B), Moving Platform(>)
+  "######...^..o.......",  // Ground Floor 1, Spike(^), Ring#4(o) after spike  
+  ".........#.........#",  // Platform after spike, Final Ledge
+  "................o...",  // Ring #6 on Final Ledge
+  "...................*",  // Exit Portal on ground level
+  "####################",  // Bottom ground
   "...................."
 ];
 
 // Legend:
 // . = empty, # = platform, o = ring, * = exit, @ = start, ^ = spike
+// B = bouncy floor, > = moving platform
 
 const MAP_ROWS = LEVEL_MAP.length;
 const MAP_COLS = LEVEL_MAP[0].length;
@@ -175,7 +181,7 @@ function resetLevel() {
           state.objects.push({ type: "spike", x: cx, y: cy });
           break;
         case "*":
-          state.objects.push({ type: "exit", x: cx, y: cy });
+          state.objects.push({ type: "exit", x: cx, y: cy, active: false });
           break;
         case "~":
           state.objects.push({ type: "water", x: px, y: py, width: TILE_SIZE, height: TILE_SIZE });
@@ -183,24 +189,40 @@ function resetLevel() {
         case "=":
           state.objects.push({ type: "lava", x: px, y: py, width: TILE_SIZE, height: TILE_SIZE });
           break;
+        case "B":
+          // Bouncy floor - create as platform with high restitution
+          state.platforms.push({
+            x: px,
+            y: py + TILE_SIZE - 8,
+            width: TILE_SIZE,
+            height: 8,
+            bouncy: true,
+            velocity: 0,
+            deltaX: 0,
+            min: px,
+            max: px
+          });
+          break;
         case ">": {
+          // Vertical moving platform as specified
           const width = TILE_SIZE;
-          const rawMin = clamp(px - PLATFORM_RANGE, 0, LEVEL_WIDTH - width);
-          const rawMax = clamp(px + PLATFORM_RANGE, 0, LEVEL_WIDTH - width);
-          const min = Math.min(rawMin, rawMax);
-          const max = Math.max(rawMin, rawMax);
+          const height = 14;
+          const minY = py - PLATFORM_RANGE;
+          const maxY = py + PLATFORM_RANGE;
           const direction = Math.random() < 0.5 ? 1 : -1;
           const platform = {
-            x: clamp(px, min, max),
-            y: py + TILE_SIZE - 16,
+            x: px,
+            y: py,
             width,
-            height: 14,
-            min,
-            max,
+            height,
+            minY: clamp(minY, 0, LEVEL_HEIGHT - height),
+            maxY: clamp(maxY, 0, LEVEL_HEIGHT - height),
             velocity: PLATFORM_SPEED * direction,
-            deltaX: 0
+            deltaX: 0,
+            deltaY: 0,
+            vertical: true
           };
-          if (platform.min === platform.max) {
+          if (platform.minY === platform.maxY) {
             platform.velocity = 0;
           }
           state.platforms.push(platform);
@@ -229,20 +251,41 @@ function updatePlatforms(delta) {
   for (const platform of state.platforms) {
     if (!platform.velocity) {
       platform.deltaX = 0;
+      platform.deltaY = 0;
       continue;
     }
-    const prevX = platform.x;
-    platform.x += platform.velocity * delta;
+    
+    if (platform.vertical) {
+      // Vertical moving platform
+      const prevY = platform.y;
+      platform.y += platform.velocity * delta;
 
-    if (platform.x <= platform.min) {
-      platform.x = platform.min;
-      platform.velocity = Math.abs(platform.velocity);
-    } else if (platform.x >= platform.max) {
-      platform.x = platform.max;
-      platform.velocity = -Math.abs(platform.velocity);
+      if (platform.y <= platform.minY) {
+        platform.y = platform.minY;
+        platform.velocity = Math.abs(platform.velocity);
+      } else if (platform.y >= platform.maxY) {
+        platform.y = platform.maxY;
+        platform.velocity = -Math.abs(platform.velocity);
+      }
+
+      platform.deltaY = platform.y - prevY;
+      platform.deltaX = 0;
+    } else {
+      // Horizontal moving platform (existing logic)
+      const prevX = platform.x;
+      platform.x += platform.velocity * delta;
+
+      if (platform.x <= platform.min) {
+        platform.x = platform.min;
+        platform.velocity = Math.abs(platform.velocity);
+      } else if (platform.x >= platform.max) {
+        platform.x = platform.max;
+        platform.velocity = -Math.abs(platform.velocity);
+      }
+
+      platform.deltaX = platform.x - prevX;
+      platform.deltaY = 0;
     }
-
-    platform.deltaX = platform.x - prevX;
   }
 }
 
@@ -258,7 +301,8 @@ function updateBall(delta) {
     ball.vx += MOVE_ACCEL * delta;
   }
 
-  ball.vx *= MOVE_DECAY;
+  // Apply linear drag (proper physics)
+  ball.vx *= (1 - MOVE_DECAY * delta);
   if (Math.abs(ball.vx) < 8) {
     ball.vx = 0;
   }
@@ -345,9 +389,22 @@ function handlePlatformCollisions(ball, prevX, prevY) {
       ball.vy >= 0
     ) {
       ball.y = top - BALL_RADIUS - 0.01;
-      ball.vy = 0;
-      ball.onGround = true;
+      
+      // Apply bouncy floor physics
+      if (platform.bouncy) {
+        // High restitution for bouncy floor
+        ball.vy = -Math.abs(ball.vy) * BOUNCY_RESTITUTION;
+        if (Math.abs(ball.vy) < 100) {
+          ball.vy = -400; // Minimum bounce velocity for bouncy floor
+        }
+      } else {
+        // Normal platform - apply regular restitution
+        ball.vy = -Math.abs(ball.vy) * BALL_RESTITUTION;
+        ball.onGround = true;
+      }
+      
       ball.x += platform.deltaX || 0;
+      ball.y += platform.deltaY || 0;
     }
 
     // Bumping underside
@@ -397,6 +454,17 @@ function checkObjects() {
         state.ringsCollected += 1;
         state.score += 100;
         setMessage("Ring collected!", 0.8);
+        
+        // Activate portal when all 6 rings are collected
+        if (state.ringsCollected >= state.rings) {
+          for (const exitObj of state.objects) {
+            if (exitObj.type === "exit") {
+              exitObj.active = true;
+              setMessage("Portal activated!", 1.2);
+              break;
+            }
+          }
+        }
       }
       continue;
     }
@@ -404,7 +472,8 @@ function checkObjects() {
     if (obj.type === "spike") {
       if (distance(ball.x, ball.y, obj.x, obj.y) < BALL_RADIUS + 6) {
         setMessage("Spiked!", 1.4);
-        loseLife();
+        // Spike pit restarts the level immediately
+        resetLevel();
         return;
       }
       continue;
@@ -422,8 +491,10 @@ function checkObjects() {
 
     if (obj.type === "exit") {
       if (distance(ball.x, ball.y, obj.x, obj.y) < BALL_RADIUS + 14) {
-        if (state.ringsCollected >= state.rings) {
+        if (obj.active && state.ringsCollected >= state.rings) {
           winLevel();
+        } else if (!obj.active) {
+          setMessage("Portal is inactive - collect all rings!", 1.2);
         } else {
           setMessage("Collect all rings first!", 1.2);
         }
@@ -468,18 +539,16 @@ function winLevel() {
 function updateCamera() {
   const ball = state.ball;
   const halfW = canvas.width / 2;
-  const halfH = canvas.height / 2;
 
   const minX = halfW;
   const maxX = LEVEL_WIDTH - halfW;
-  const minY = halfH;
-  const maxY = LEVEL_HEIGHT - halfH;
 
   const targetX = maxX <= minX ? LEVEL_WIDTH / 2 : clamp(ball.x, minX, maxX);
-  const targetY = maxY <= minY ? LEVEL_HEIGHT / 2 : clamp(ball.y, minY, maxY);
+  // Lock Y-position as specified in requirements
+  const targetY = LEVEL_HEIGHT / 2;
 
   state.camera.x += (targetX - state.camera.x) * CAMERA_LERP;
-  state.camera.y += (targetY - state.camera.y) * CAMERA_LERP;
+  state.camera.y = targetY; // Y-position locked
 }
 
 function drawBackground() {
@@ -531,13 +600,35 @@ function drawHazards() {
 
 function drawPlatforms() {
   for (const platform of state.platforms) {
-    const gradient = ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.height);
-    gradient.addColorStop(0, "#14fff7");
-    gradient.addColorStop(1, "#0ab5ff");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
-    ctx.strokeRect(platform.x + 0.5, platform.y + 0.5, platform.width - 1, platform.height - 1);
+    if (platform.bouncy) {
+      // Draw bouncy floor in bright blue as specified
+      const gradient = ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.height);
+      gradient.addColorStop(0, "#00ccff");
+      gradient.addColorStop(1, "#0088cc");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+      ctx.strokeRect(platform.x + 0.5, platform.y + 0.5, platform.width - 1, platform.height - 1);
+      
+      // Add sparkle effect for bouncy floor
+      ctx.save();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+      for (let i = 0; i < 3; i++) {
+        const sparkleX = platform.x + (platform.width / 4) * (i + 1);
+        const sparkleY = platform.y + platform.height / 2;
+        ctx.fillRect(sparkleX - 1, sparkleY - 1, 2, 2);
+      }
+      ctx.restore();
+    } else {
+      // Regular platform
+      const gradient = ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.height);
+      gradient.addColorStop(0, "#14fff7");
+      gradient.addColorStop(1, "#0ab5ff");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+      ctx.strokeRect(platform.x + 0.5, platform.y + 0.5, platform.width - 1, platform.height - 1);
+    }
   }
 }
 
@@ -569,11 +660,32 @@ function drawRingsAndHazards() {
 
     if (obj.type === "exit") {
       ctx.save();
-      ctx.strokeStyle = "#14fff7";
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.arc(obj.x, obj.y, 18, 0, Math.PI * 2);
-      ctx.stroke();
+      if (obj.active) {
+        // Active portal - swirling bright cyan
+        ctx.strokeStyle = "#00ffff";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(obj.x, obj.y, 18, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Add swirling effect
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const time = Date.now() * 0.005;
+        ctx.arc(obj.x, obj.y, 14, time, time + Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(obj.x, obj.y, 10, -time, -time + Math.PI);
+        ctx.stroke();
+      } else {
+        // Inactive portal - dim gray
+        ctx.strokeStyle = "#666666";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(obj.x, obj.y, 18, 0, Math.PI * 2);
+        ctx.stroke();
+      }
       ctx.restore();
     }
   }
