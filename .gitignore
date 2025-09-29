@@ -11,8 +11,12 @@ Thumbs.db
 # Logs
 *.log
 
-# Node modules (if any are added later)
+# Node modules and package files
 node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Build artifacts
 dist/

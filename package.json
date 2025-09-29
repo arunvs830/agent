@@ -1,0 +1,29 @@
+{
+  "name": "snake-game",
+  "version": "1.0.0",
+  "description": "A retro-style Snake game built with HTML5 Canvas and JavaScript",
+  "main": "index.html",
+  "scripts": {
+    "start": "live-server --port=3000 --open=/index.html",
+    "dev": "live-server --port=3000 --open=/index.html --watch=.",
+    "serve": "python3 -m http.server 8080"
+  },
+  "keywords": [
+    "snake",
+    "game",
+    "html5",
+    "canvas",
+    "javascript",
+    "retro"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arunvs830/agent.git"
+  },
+  "homepage": "https://github.com/arunvs830/agent#readme"
+}
