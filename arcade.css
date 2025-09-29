@@ -1,0 +1,213 @@
+:root {
+  color-scheme: dark;
+  --bg: radial-gradient(circle at 20% -10%, rgba(255, 102, 196, 0.25), rgba(12, 16, 46, 1) 60%, #050510 100%);
+  --panel: rgba(16, 22, 48, 0.82);
+  --panel-highlight: rgba(79, 70, 229, 0.45);
+  --text: #f4f5ff;
+  --muted: rgba(244, 245, 255, 0.72);
+  --accent: #7c3aed;
+  --accent-secondary: #06d6a0;
+  --border: rgba(255, 255, 255, 0.12);
+  --shadow: 0 25px 70px rgba(5, 6, 24, 0.55);
+  font-family: "Press Start 2P", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+main.layout {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: clamp(2.5rem, 5vw, 4rem) clamp(1.2rem, 4vw, 2.5rem) clamp(3rem, 6vw, 4.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2rem, 4vw, 3.5rem);
+}
+
+.hero {
+  text-align: center;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.hero-kicker {
+  margin: 0;
+  font-size: clamp(0.65rem, 1.4vw, 0.85rem);
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+  color: var(--muted);
+}
+
+.hero-title {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  letter-spacing: 0.12em;
+  color: #fff;
+  text-shadow: 0 0 18px rgba(124, 58, 237, 0.45);
+}
+
+.hero-subtitle {
+  margin: 0;
+  font-size: clamp(0.75rem, 1.6vw, 1rem);
+  color: var(--muted);
+  max-width: 640px;
+  justify-self: center;
+  line-height: 1.6;
+}
+
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.game-card {
+  position: relative;
+  background: var(--panel);
+  border-radius: 26px;
+  border: 1px solid var(--border);
+  padding: clamp(1.6rem, 3vw, 2.2rem);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 1.1rem;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.game-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(124, 58, 237, 0.14), transparent 55%);
+  pointer-events: none;
+}
+
+.game-card__badge {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.22);
+  border: 1px solid rgba(124, 58, 237, 0.45);
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #d8b4fe;
+}
+
+.game-card__title {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+  color: #fff;
+}
+
+.game-card__description {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(0.62rem, 1.5vw, 0.85rem);
+  line-height: 1.6;
+}
+
+.game-card__features {
+  margin: 0;
+  padding: 0 0 0 1.1rem;
+  display: grid;
+  gap: 0.45rem;
+  color: rgba(244, 245, 255, 0.8);
+  font-size: clamp(0.55rem, 1.4vw, 0.75rem);
+}
+
+.game-card__features li::marker {
+  color: var(--accent-secondary);
+}
+
+.game-card__action {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1.1rem;
+  background: rgba(6, 214, 160, 0.18);
+  border: 1px solid rgba(6, 214, 160, 0.45);
+  border-radius: 999px;
+  color: #f1faff;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  text-decoration: none;
+  letter-spacing: 0.14em;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.game-card__action::after {
+  content: "▶";
+  font-size: 0.7rem;
+}
+
+.game-card__action:hover,
+.game-card__action:focus-visible {
+  transform: translateY(-2px);
+  background: rgba(6, 214, 160, 0.28);
+  box-shadow: 0 12px 28px rgba(6, 214, 160, 0.25);
+}
+
+.instructions {
+  background: rgba(12, 18, 42, 0.7);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  padding: clamp(1.5rem, 3vw, 2rem);
+  display: grid;
+  gap: 1rem;
+  line-height: 1.7;
+  box-shadow: 0 18px 50px rgba(5, 6, 24, 0.45);
+}
+
+.instructions h2 {
+  margin: 0;
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  color: #d1d5ff;
+}
+
+.instructions ol {
+  margin: 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.6rem;
+  font-size: clamp(0.58rem, 1.5vw, 0.8rem);
+  color: var(--muted);
+}
+
+.instructions__tip {
+  margin: 0;
+  font-size: clamp(0.55rem, 1.4vw, 0.75rem);
+  color: rgba(244, 245, 255, 0.68);
+}
+
+.footer {
+  text-align: center;
+  font-size: clamp(0.55rem, 1.4vw, 0.75rem);
+  color: rgba(244, 245, 255, 0.6);
+}
+
+@media (max-width: 640px) {
+  main.layout {
+    gap: 2rem;
+  }
+
+  .game-card__badge {
+    position: static;
+    justify-self: start;
+  }
+
+  .game-card {
+    padding-top: 2.4rem;
+  }
+}

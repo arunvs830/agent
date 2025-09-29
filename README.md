@@ -1,23 +1,50 @@
-# Retro Snake
+# Retro Arcade
 
-A browser-based retro snake game built with HTML, CSS, and vanilla JavaScript. Features a neon-infused aesthetic, smooth grid movement, pause/resume controls, and persistent high scores stored in the browser.
+Two browser-based retro mini-games built with HTML, CSS, and vanilla JavaScript. Fire up a local static server and pick your favorite nostalgic challenge.
 
-## Play locally
+## Retro Snake (`snake.html`)
 
-1. From the repository root, start a simple static server:
+A neon-styled take on the classic with modern conveniences:
 
-	```bash
-	python3 -m http.server 8000
-	```
+- **Level selector** — swap between Classic, Turbo, and Insane speeds mid-run
+- **Wall toggle** — choose wraparound arenas or unforgiving solid walls
+- **Sound toggle** — Web Audio chimes for snacks and crashes
+- **Touch controls** — on-screen D-pad appears automatically on touch devices
+- **Per-mode highscores** — each level/wall combo tracks its own best score via `localStorage`
 
-2. Open your browser to <http://localhost:8000> and launch `index.html`.
+### Controls
 
-> **Tip:** You can also open `index.html` directly in your browser, but running a local server avoids issues with certain browser security restrictions.
+- Arrow Keys / WASD to steer
+- On-screen D-pad for taps and swipes
+- `P` key or Pause button to pause/resume
+- `Enter` to start or restart after a game over
 
-## Controls
+## Retro Duck Hunt (`duck.html`)
 
-- **Arrow Keys / WASD** — steer the snake
-- **Enter** — start a new round or restart after game over
-- **P** or **Pause/Resume button** — toggle pause state
+Arcade-inspired duck shooting with chunky pixels and crunchy feedback:
 
-High scores are stored locally in `localStorage`, so you can chase your personal best between sessions.
+- Randomized duck waves that weave across the sky
+- Tap/click shooting with accuracy, hits, and misses tracked every round
+- 60-second rounds scored by speed, precision, and duck speed bonuses
+- Feather particle bursts and muzzle flashes for satisfying hits
+- Keyboard (`Space`) or HUD button to launch a new round
+
+### Controls
+
+- Mouse or trackpad to aim, click to shoot
+- `Space` or Start Round button to begin
+- Shots and accuracy reset each round; ducks escaping add to misses
+
+## Run locally
+
+From the project root, launch a simple static server and open the game you want to play:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then open <http://localhost:8000/> to pick a game from the arcade hub.
+
+Want quick links? Jump straight to <http://localhost:8000/snake.html> or <http://localhost:8000/duck.html>.
+
+> **Tip:** Opening the files directly works in most browsers, but a local server avoids asset and audio policy restrictions.

@@ -8,12 +8,25 @@ const overlayInfo = document.getElementById("overlayInfo");
 const scoreValue = document.getElementById("scoreValue");
 const bestValue = document.getElementById("bestValue");
 const pauseButton = document.getElementById("pauseButton");
+const levelSelect = document.getElementById("levelSelect");
+const wallModeButton = document.getElementById("wallModeButton");
+const touchControls = document.getElementById("touchControls");
+const soundButton = document.getElementById("soundButton");
+const pointerCoarseQuery =
+  typeof window.matchMedia === "function"
+    ? window.matchMedia("(pointer: coarse)")
+    : null;
 
 const gridSize = 20;
 const tileCount = canvas.width / gridSize;
-const updateRate = 8; // frames per second
-const stepInterval = 1000 / updateRate;
-const bestKey = "retro-snake-best";
+const levels = {
+  classic: { label: "Classic", speed: 8 },
+  turbo: { label: "Turbo", speed: 12 },
+  insane: { label: "Insane", speed: 16 }
+};
+let updateRate = levels.classic.speed; // frames per second
+let stepInterval = 1000 / updateRate;
+const bestKey = "retro-snake-best-map";
 const directions = {
   ArrowUp: { x: 0, y: -1 },
   ArrowDown: { x: 0, y: 1 },
@@ -24,6 +37,21 @@ const directions = {
   KeyA: { x: -1, y: 0 },
   KeyD: { x: 1, y: 0 }
 };
+const touchDirectionMap = {
+  up: directions.ArrowUp,
+  down: directions.ArrowDown,
+  left: directions.ArrowLeft,
+  right: directions.ArrowRight
+};
+const soundPreferenceKey = "retro-snake-sound";
+let soundEnabled = true;
+try {
+  soundEnabled = window.localStorage.getItem(soundPreferenceKey) !== "off";
+} catch (error) {
+  console.warn("Unable to read sound preference; defaulting to on.", error);
+}
+let audioContext;
+let masterGain;
 
 let snake = [];
 let direction = { x: 1, y: 0 };
@@ -33,17 +61,51 @@ let food = {
   y: Math.floor(tileCount / 2)
 };
 let score;
-let best = Number(window.localStorage.getItem(bestKey)) || 0;
+let currentLevel = "classic";
+let wallMode = "wrap";
+let bestScores;
+try {
+  bestScores = JSON.parse(window.localStorage.getItem(bestKey) || "{}");
+} catch (error) {
+  console.warn("Failed to parse best scores, resetting store.", error);
+  bestScores = {};
+}
 let gameState = "idle"; // idle | running | paused | over
 let lastStep = 0;
 
-bestValue.textContent = best;
+function getBestKey() {
+  return `${currentLevel}-${wallMode}`;
+}
+
+function getBestScore() {
+  return bestScores[getBestKey()] || 0;
+}
+
+function setBestScore(value) {
+  bestScores[getBestKey()] = value;
+  window.localStorage.setItem(bestKey, JSON.stringify(bestScores));
+}
+
+function refreshBestDisplay() {
+  bestValue.textContent = getBestScore();
+}
+
+setLevel(currentLevel);
+updateWallModeButton();
+updateTouchControlsVisibility();
+updateSoundButton();
 
 drawBoard();
-showOverlay("Press Enter to Start", "Move with Arrow Keys or WASD", "Press P to Pause · Enter to Restart");
+showOverlay(
+  "Press Enter to Start",
+  "Move with Arrow Keys or WASD",
+  `${composeSettingsDetails()} · Press P to Pause · Enter to Restart`
+);
 updatePauseButtonLabel();
 
 function startGame() {
+  updateRate = levels[currentLevel].speed;
+  stepInterval = 1000 / updateRate;
   snake = [
     { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) },
     { x: Math.floor(tileCount / 2) - 1, y: Math.floor(tileCount / 2) },
@@ -56,6 +118,9 @@ function startGame() {
   food = spawnFood();
   gameState = "running";
   lastStep = 0;
+  if (soundEnabled) {
+    ensureAudioContext();
+  }
   hideOverlay();
   updatePauseButtonLabel();
 }
@@ -63,7 +128,7 @@ function startGame() {
 function togglePause() {
   if (gameState === "running") {
     gameState = "paused";
-    showOverlay("Paused", "Press P or the button to resume", "");
+    showOverlay("Paused", "Press P or the button to resume", composeSettingsDetails());
     updatePauseButtonLabel();
   } else if (gameState === "paused") {
     gameState = "running";
@@ -74,13 +139,13 @@ function togglePause() {
 
 function endGame() {
   gameState = "over";
-  showOverlay("Game Over", `Score: ${score}`, "Press Enter to try again");
-  if (score > best) {
-    best = score;
-    bestValue.textContent = best;
-    window.localStorage.setItem(bestKey, String(best));
+  showOverlay("Game Over", `Score: ${score}`, `${composeSettingsDetails()} · Press Enter to try again`);
+  if (score > getBestScore()) {
+    setBestScore(score);
+    refreshBestDisplay();
   }
   updatePauseButtonLabel();
+  playGameOverSound();
 }
 
 function spawnFood() {
@@ -97,15 +162,18 @@ function spawnFood() {
 
 function update() {
   direction = nextDirection;
-  const head = {
-    x: snake[0].x + direction.x,
-    y: snake[0].y + direction.y
-  };
+  let headX = snake[0].x + direction.x;
+  let headY = snake[0].y + direction.y;
 
-  if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+  if (wallMode === "wrap") {
+    headX = (headX + tileCount) % tileCount;
+    headY = (headY + tileCount) % tileCount;
+  } else if (headX < 0 || headX >= tileCount || headY < 0 || headY >= tileCount) {
     endGame();
     return;
   }
+
+  const head = { x: headX, y: headY };
 
   if (snake.some((segment) => segment.x === head.x && segment.y === head.y)) {
     endGame();
@@ -118,6 +186,7 @@ function update() {
     score += 10;
     scoreValue.textContent = score;
     food = spawnFood();
+    playEatSound();
   } else {
     snake.pop();
   }
@@ -216,6 +285,197 @@ function updatePauseButtonLabel() {
   }
 }
 
+function updateWallModeButton() {
+  if (!wallModeButton) return;
+  const label = wallMode === "wrap" ? "Walls: Wrap" : "Walls: Solid";
+  wallModeButton.textContent = label;
+  wallModeButton.setAttribute("aria-pressed", String(wallMode === "solid"));
+}
+
+function setLevel(levelKey) {
+  if (!levels[levelKey]) {
+    return;
+  }
+  currentLevel = levelKey;
+  if (levelSelect) {
+    levelSelect.value = currentLevel;
+  }
+  updateRate = levels[currentLevel].speed;
+  stepInterval = 1000 / updateRate;
+  lastStep = 0;
+  refreshBestDisplay();
+  refreshOverlayForCurrentState();
+}
+
+function toggleWallModeSetting() {
+  wallMode = wallMode === "wrap" ? "solid" : "wrap";
+  updateWallModeButton();
+  refreshBestDisplay();
+  lastStep = 0;
+  refreshOverlayForCurrentState();
+}
+
+function composeSettingsDetails() {
+  const levelLabel = levels[currentLevel].label;
+  const wallLabel = wallMode === "wrap" ? "Wrap" : "Solid";
+  const soundLabel = soundEnabled ? "Sound On" : "Sound Off";
+  return `Level: ${levelLabel} · Walls: ${wallLabel} · ${soundLabel}`;
+}
+
+function refreshOverlayForCurrentState() {
+  if (overlay.classList.contains("hidden")) {
+    return;
+  }
+  if (gameState === "paused") {
+    showOverlay("Paused", "Press P or the button to resume", composeSettingsDetails());
+  } else if (gameState === "over") {
+    showOverlay(
+      "Game Over",
+      `Score: ${score}`,
+      `${composeSettingsDetails()} · Press Enter to try again`
+    );
+  } else if (gameState === "idle") {
+    showOverlay(
+      "Press Enter to Start",
+      "Move with Arrow Keys or WASD",
+      `${composeSettingsDetails()} · Press P to Pause · Enter to Restart`
+    );
+  }
+}
+
+function updateTouchControlsVisibility() {
+  if (!touchControls) return;
+  const shouldShow =
+    (pointerCoarseQuery && pointerCoarseQuery.matches) || window.innerWidth <= 560;
+  if (shouldShow) {
+    touchControls.classList.add("visible");
+    touchControls.setAttribute("aria-hidden", "false");
+  } else {
+    touchControls.classList.remove("visible");
+    touchControls.setAttribute("aria-hidden", "true");
+  }
+}
+
+function handleTouchControl(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+  if (event.type === "click" && target.dataset.skipClick === "true") {
+    target.removeAttribute("data-skip-click");
+    return;
+  }
+  if (event.type === "pointerdown") {
+    target.dataset.skipClick = "true";
+    window.setTimeout(() => {
+      target.removeAttribute("data-skip-click");
+    }, 0);
+  }
+  const directionKey = target.dataset.direction;
+  if (!directionKey) {
+    return;
+  }
+  if (event.type === "pointerdown") {
+    event.preventDefault();
+  }
+  if (soundEnabled) {
+    ensureAudioContext();
+  }
+  const mappedDirection = touchDirectionMap[directionKey];
+  if (mappedDirection) {
+    handleDirectionChange(mappedDirection);
+  }
+}
+
+function ensureAudioContext() {
+  if (typeof window.AudioContext !== "function" && typeof window.webkitAudioContext !== "function") {
+    return null;
+  }
+  if (!audioContext) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    audioContext = new AudioContextClass();
+    masterGain = audioContext.createGain();
+    masterGain.gain.value = soundEnabled ? 0.18 : 0;
+    masterGain.connect(audioContext.destination);
+  }
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+  if (masterGain) {
+    masterGain.gain.setValueAtTime(soundEnabled ? 0.18 : 0, audioContext.currentTime);
+  }
+  return audioContext;
+}
+
+function updateSoundButton() {
+  if (!soundButton) return;
+  const label = soundEnabled ? "Sound: On" : "Sound: Off";
+  soundButton.textContent = label;
+  soundButton.setAttribute("aria-pressed", String(soundEnabled));
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  try {
+    window.localStorage.setItem(soundPreferenceKey, soundEnabled ? "on" : "off");
+  } catch (error) {
+    console.warn("Unable to persist sound preference.", error);
+  }
+  ensureAudioContext();
+  updateSoundButton();
+  refreshOverlayForCurrentState();
+}
+
+function playTone(frequency, duration = 0.18, type = "square") {
+  if (!soundEnabled) return;
+  const ctx = ensureAudioContext();
+  if (!ctx || !masterGain) return;
+  const now = ctx.currentTime;
+  const oscillator = ctx.createOscillator();
+  const gainNode = ctx.createGain();
+
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, now);
+
+  gainNode.gain.setValueAtTime(0.001, now);
+  gainNode.gain.exponentialRampToValueAtTime(0.35, now + 0.02);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+  oscillator.connect(gainNode);
+  gainNode.connect(masterGain);
+
+  oscillator.start(now);
+  oscillator.stop(now + duration + 0.05);
+}
+
+function playEatSound() {
+  playTone(660, 0.12, "square");
+  setTimeout(() => playTone(880, 0.1, "square"), 40);
+}
+
+function playGameOverSound() {
+  if (!soundEnabled) return;
+  const ctx = ensureAudioContext();
+  if (!ctx || !masterGain) return;
+  const now = ctx.currentTime;
+  const oscillator = ctx.createOscillator();
+  const gainNode = ctx.createGain();
+
+  oscillator.type = "sawtooth";
+  oscillator.frequency.setValueAtTime(440, now);
+  oscillator.frequency.exponentialRampToValueAtTime(110, now + 0.6);
+
+  gainNode.gain.setValueAtTime(0.001, now);
+  gainNode.gain.exponentialRampToValueAtTime(0.4, now + 0.05);
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+
+  oscillator.connect(gainNode);
+  gainNode.connect(masterGain);
+
+  oscillator.start(now);
+  oscillator.stop(now + 0.7);
+}
+
 let animationFrame;
 
 function loop(timestamp) {
@@ -253,6 +513,44 @@ window.addEventListener("keydown", (event) => {
 
   handleDirectionChange(directions[event.code]);
 });
+
+if (levelSelect) {
+  levelSelect.addEventListener("change", (event) => {
+    const value = event.target && typeof event.target.value === "string" ? event.target.value : null;
+    if (value) {
+      setLevel(value);
+    }
+  });
+}
+
+if (wallModeButton) {
+  wallModeButton.addEventListener("click", () => {
+    toggleWallModeSetting();
+  });
+}
+
+if (touchControls) {
+  touchControls.addEventListener("pointerdown", handleTouchControl);
+  touchControls.addEventListener("click", handleTouchControl);
+}
+
+if (soundButton) {
+  soundButton.addEventListener("click", () => {
+    toggleSound();
+  });
+}
+
+const touchMediaChangeHandler = () => updateTouchControlsVisibility();
+
+if (pointerCoarseQuery) {
+  if (typeof pointerCoarseQuery.addEventListener === "function") {
+    pointerCoarseQuery.addEventListener("change", touchMediaChangeHandler);
+  } else if (typeof pointerCoarseQuery.addListener === "function") {
+    pointerCoarseQuery.addListener(touchMediaChangeHandler);
+  }
+}
+
+window.addEventListener("resize", updateTouchControlsVisibility);
 
 pauseButton.addEventListener("click", () => {
   if (gameState === "idle" || gameState === "over") {

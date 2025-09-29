@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Retro Tetris</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="tetris.css" />
+  </head>
+  <body>
+    <div class="scanline-overlay" aria-hidden="true"></div>
+    <main class="tetris-layout">
+      <a class="back-link" href="index.html">&larr; Back to Arcade</a>
+
+      <header class="tetris-header">
+        <p class="header-kicker">Slot in, stack up</p>
+        <h1 class="header-title">Retro Tetris</h1>
+        <p class="header-subtitle">
+          Rotate neon tetrominoes, clear blazing lines, and climb the synthwave leaderboard.
+        </p>
+      </header>
+
+      <section class="tetris-stage">
+        <div class="playfield">
+          <canvas
+            id="tetrisCanvas"
+            width="300"
+            height="600"
+            aria-label="Tetris board"
+          ></canvas>
+          <div class="status-banner hidden" id="statusBanner">
+            <p class="status-title" id="statusTitle">Ready?</p>
+            <p class="status-subtitle" id="statusSubtitle">Press Start</p>
+            <button class="status-button" id="startButton" type="button">Start Game</button>
+          </div>
+        </div>
+
+        <aside class="hud">
+          <section class="panel panel--score" aria-label="Scoreboard">
+            <h2 class="panel-title">Score</h2>
+            <dl class="score-list">
+              <div>
+                <dt>Score</dt>
+                <dd id="scoreValue">000000</dd>
+              </div>
+              <div>
+                <dt>Lines</dt>
+                <dd id="linesValue">000</dd>
+              </div>
+              <div>
+                <dt>Level</dt>
+                <dd id="levelValue">01</dd>
+              </div>
+              <div>
+                <dt>Best</dt>
+                <dd id="bestValue">000000</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="panel panel--preview" aria-label="Next piece">
+            <h2 class="panel-title">Next</h2>
+            <canvas id="nextCanvas" width="120" height="120"></canvas>
+          </section>
+
+          <section class="panel panel--hold" aria-label="Hold piece">
+            <h2 class="panel-title">Hold</h2>
+            <canvas id="holdCanvas" width="120" height="120"></canvas>
+          </section>
+
+          <section class="panel panel--controls" aria-label="Controls">
+            <h2 class="panel-title">Controls</h2>
+            <ul class="controls-list">
+              <li><span>&larr;/&rarr;</span> Move</li>
+              <li><span>&uarr;</span> Rotate</li>
+              <li><span>&darr;</span> Soft drop</li>
+              <li><span>Space</span> Hard drop</li>
+              <li><span>Shift</span> Hold</li>
+              <li><span>P</span> Pause</li>
+            </ul>
+          </section>
+        </aside>
+      </section>
+
+      <footer class="tetris-footer">
+        Built for endless stacking sessions. Your best score stays on this machine.
+      </footer>
+    </main>
+
+    <script src="tetris.js" type="module"></script>
+  </body>
+</html>

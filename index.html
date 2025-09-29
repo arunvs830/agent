@@ -3,37 +3,84 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Retro Snake</title>
+    <title>Retro Arcade</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="arcade.css" />
   </head>
   <body>
-    <div class="wrapper">
-      <header class="title">Retro Snake</header>
+    <main class="layout">
+      <header class="hero">
+        <p class="hero-kicker">Welcome to the</p>
+        <h1 class="hero-title">Retro Arcade</h1>
+        <p class="hero-subtitle">
+          Pick a cabinet, fire up a neon-soaked classic, and chase the high score.
+        </p>
+      </header>
 
-      <section class="scoreboard" aria-live="polite">
-        <div>Score: <span id="scoreValue">0</span></div>
-        <div>Best: <span id="bestValue">0</span></div>
-        <button id="pauseButton" class="button" type="button">Pause</button>
+      <section class="games-grid" aria-label="Available games">
+        <article class="game-card">
+          <div class="game-card__badge">Snake</div>
+          <h2 class="game-card__title">Retro Snake</h2>
+          <p class="game-card__description">
+            Glide through synthwave tunnels, toggle wraparound walls, and master three speed tiers with touch or keyboard controls.
+          </p>
+          <ul class="game-card__features">
+            <li>Classic, Turbo, and Insane levels</li>
+            <li>Wrap or solid walls on demand</li>
+            <li>Touch D-pad &amp; Web Audio chimes</li>
+          </ul>
+          <a class="game-card__action" href="snake.html">Play Retro Snake</a>
+        </article>
+
+        <article class="game-card">
+          <div class="game-card__badge">Duck Hunt</div>
+          <h2 class="game-card__title">Retro Duck Hunt</h2>
+          <p class="game-card__description">
+            Take aim in the pixel marshlands. Nail ducks mid-flight, rack up combos, and keep your accuracy sharp in 60-second rounds.
+          </p>
+          <ul class="game-card__features">
+            <li>Randomized flight patterns</li>
+            <li>Hits, misses, and accuracy tracking</li>
+            <li>Feather bursts and muzzle flashes</li>
+          </ul>
+          <a class="game-card__action" href="duck.html">Play Retro Duck Hunt</a>
+        </article>
+
+        <article class="game-card">
+          <div class="game-card__badge">Tetris</div>
+          <h2 class="game-card__title">Retro Tetris</h2>
+          <p class="game-card__description">
+            Lock falling neon tetrominoes, chain back-to-back line clears, and chase the marathon scoreboard in shimmering gridlight.
+          </p>
+          <ul class="game-card__features">
+            <li>Classic 10×20 well with hard &amp; soft drops</li>
+            <li>Next, Hold, and level speed ramps</li>
+            <li>Local high score tracking</li>
+          </ul>
+          <a class="game-card__action" href="tetris.html">Play Retro Tetris</a>
+        </article>
       </section>
 
-      <div class="game-container">
-        <canvas id="board" width="400" height="400" role="img" aria-label="Snake game board"></canvas>
-        <div id="overlay" class="overlay">
-          <h2 id="overlayTitle">Press Enter to Start</h2>
-          <p id="overlaySubtitle">Move with Arrow Keys or WASD</p>
-          <p id="overlayInfo">Press P to Pause · Enter to Restart</p>
-        </div>
-      </div>
+      <section class="instructions" aria-labelledby="instructions-title">
+        <h2 id="instructions-title">How to launch locally</h2>
+        <ol>
+          <li>From the project root, run <code>python3 -m http.server 8000</code>.</li>
+          <li>Open <a href="http://localhost:8000/">http://localhost:8000/</a> in your browser.</li>
+          <li>Select a game above and go for the leaderboard glory.</li>
+        </ol>
+        <p class="instructions__tip">
+          Tip: A local server keeps audio and asset loading happy across browsers.
+        </p>
+      </section>
 
-      <footer class="hint">High scores are stored locally in your browser.</footer>
-    </div>
-
-    <script src="script.js"></script>
+      <footer class="footer">
+        Built with ♥ using vanilla HTML, CSS, and JavaScript. High scores stay in your browser.
+      </footer>
+    </main>
   </body>
 </html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Retro Duck Hunt</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="duck.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="title">Retro Duck Hunt</header>
+
+      <section class="hud" aria-live="polite">
+        <div class="metric">Score <span id="scoreValue">000000</span></div>
+        <div class="metric">Hits <span id="hitsValue">00</span></div>
+        <div class="metric">Misses <span id="missesValue">00</span></div>
+        <div class="metric">Accuracy <span id="accuracyValue">100%</span></div>
+        <div class="metric">Time <span id="timerValue">60</span>s</div>
+        <button id="startButton" class="button" type="button">Start Round</button>
+      </section>
+
+      <div class="game-container">
+        <canvas
+          id="field"
+          width="640"
+          height="360"
+          role="img"
+          aria-label="Duck hunting field"
+        ></canvas>
+        <div id="overlay" class="overlay">
+          <h2 id="overlayTitle">Retro Duck Hunt</h2>
+          <p id="overlaySubtitle">Shoot the ducks before they escape!</p>
+          <p id="overlayInfo">Click Start or press Space to begin</p>
+        </div>
+      </div>
+
+      <footer class="hint">
+        Tip: use your mouse or trackpad to aim. Shots and accuracy reset each round.
+      </footer>
+    </div>
+
+    <script src="duck.js"></script>
+  </body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Retro Bounce</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="bounce.css" />
+  </head>
+  <body>
+    <div class="scanline-overlay" aria-hidden="true"></div>
+    <main class="bounce-layout">
+      <a class="back-link" href="index.html">&larr; Back to Arcade</a>
+
+      <header class="bounce-header">
+        <p class="header-kicker">Charge up the neon spheres</p>
+        <h1 class="header-title">Retro Bounce</h1>
+        <p class="header-subtitle">
+          Roll the classic red sphere through ring-laced corridors, dodge spikes and pools, and dive into the portal.
+        </p>
+      </header>
+
+      <section class="bounce-stage">
+        <div class="playfield">
+          <canvas
+            id="bounceCanvas"
+            width="320"
+            height="480"
+            aria-label="Bounce arena"
+          ></canvas>
+          <div class="status-banner" id="statusBanner">
+            <p class="status-title" id="statusTitle">Ready?</p>
+            <p class="status-subtitle" id="statusSubtitle">Press Start</p>
+            <button class="status-button" id="startButton" type="button">Start Game</button>
+          </div>
+        </div>
+
+        <aside class="hud">
+          <section class="panel panel--score" aria-label="Scoreboard">
+            <h2 class="panel-title">Score</h2>
+            <dl class="score-list">
+              <div>
+                <dt>Score</dt>
+                <dd id="scoreValue">000000</dd>
+              </div>
+              <div>
+                <dt>Lives</dt>
+                <dd id="livesValue">03</dd>
+              </div>
+              <div>
+                <dt>Rings</dt>
+                <dd id="ringsValue">00/00</dd>
+              </div>
+              <div>
+                <dt>Level</dt>
+                <dd id="levelValue">01</dd>
+              </div>
+              <div>
+                <dt>Best Score</dt>
+                <dd id="bestValue">000000</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="panel panel--objectives" aria-label="Objectives">
+            <h2 class="panel-title">Objectives</h2>
+            <ul class="objectives-list" id="objectivesList">
+              <li>Collect every ring</li>
+              <li>Avoid spikes, water, and lava</li>
+              <li>Ride platforms to reach the exit</li>
+            </ul>
+          </section>
+
+          <section class="panel panel--controls" aria-label="Controls">
+            <h2 class="panel-title">Controls</h2>
+            <ul class="controls-list">
+              <li><span>&larr;/&rarr;</span> Roll left / right</li>
+              <li><span>&uarr;/Space</span> Jump</li>
+              <li><span>P</span> Pause</li>
+              <li><span>Mouse / Touch</span> Move paddle (optional)</li>
+            </ul>
+          </section>
+        </aside>
+      </section>
+
+      <footer class="bounce-footer">
+        Collect every ring, conquer the traps, and clear the portal just like the Symbian classic.
+      </footer>
+    </main>
+
+    <script src="bounce.js" type="module"></script>
+  </body>
+</html>
